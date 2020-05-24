@@ -3,6 +3,12 @@ public class Pixel {
     int green;
     int blue;
 
+    @Override
+    public String toString() {
+        return "(" + this.red + "," + this.green + "," + this.blue + ")";
+    }
+
+
     public Pixel(int red, int green, int blue) {
         this.red = red;
         this.green = green;
@@ -43,8 +49,6 @@ public class Pixel {
                 (this.blue + n) % n);
     }
 
-    String str() {
-        return "(" + this.red + "," + this.green + "," + this.blue + ")";
-    }
+
 
 }
