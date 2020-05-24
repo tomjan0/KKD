@@ -14,7 +14,6 @@ public class TGA {
 
         this.width = raw[13] * 256 + (raw[12] & 0xFF);
         this.height = raw[15] * 256 + (raw[14] & 0xFF);
-        System.out.println(this.width + " " + this.height);
         this.pixels = TGA.bitmapToPixels(Arrays.copyOfRange(raw, 18, raw.length - 26), width, height);
 
     }

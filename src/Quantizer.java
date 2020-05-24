@@ -30,19 +30,21 @@ public class Quantizer {
 
     public double mse() {
         Pixel[][] original = image.getPixels();
+        double size = original.length * original[0].length;
         double acc = 0;
         for (int i = 0; i < original.length; i++) {
             for (int j = 0; j < original[0].length; j++) {
                 double temp = euclidSquared(pixelAsVector(original[i][j]), pixelAsVector(this.processedPixels[i][j]));
-                acc += temp * temp;
+                acc += temp;
             }
         }
-        return acc / (original.length * original[0].length);
+        return acc / size;
     }
 
     public double snr(double mse) {
         Pixel[][] original = image.getPixels();
         double acc = 0;
+        double size = original.length * original[0].length;
         for (Pixel[] row : original) {
             for (Pixel pixel : row) {
                 acc += pixel.red * pixel.red;
@@ -50,7 +52,7 @@ public class Quantizer {
                 acc += pixel.blue * pixel.blue;
             }
         }
-        return (acc / (original.length * original[0].length)) / mse;
+        return ((acc / size) / mse);
     }
 
     private Pixel[] generateCodeBook(int codebookSize) {
@@ -228,7 +230,7 @@ public class Quantizer {
 
                     System.out.println("Dokonano kwantyzacji " + args[0] + " ---> " + args[1]);
                     System.out.println("\tBłąd średniokwadratowy: " + mse);
-                    System.out.println("\tStosunek sygnału do szumu: " + snr);
+                    System.out.println("\tStosunek sygnału do szumu: " + snr + " (" + 10 * Math.log10(snr) + " dB)");
                 }
             } catch (NumberFormatException | IOException ex) {
                 ex.printStackTrace();
