@@ -49,6 +49,17 @@ public class Pixel {
                 (this.blue + n) % n);
     }
 
+    public Pixel mul(int n) {
+        return new Pixel(
+                this.red * n,
+                this.green * n,
+                this.blue * n);
+    }
+
+    public Pixel quantization(int step) {
+      return this.div(step).mul(step);
+    }
+
 
 
 }

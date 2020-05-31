@@ -8,7 +8,7 @@ public class TGA {
     protected int width;
     protected int height;
 
-    public TGA(byte [] raw) {
+    public TGA(byte[] raw) {
         this.header = Arrays.copyOfRange(raw, 0, 18);
         this.footer = Arrays.copyOfRange(raw, raw.length - 26, raw.length);
 
@@ -51,14 +51,23 @@ public class TGA {
         return pixels;
     }
 
+    public static byte[] differentialCoding(byte[] bytes) {
+        byte[] result = new byte[bytes.length];
+        result[0] = bytes[0];
+        for (int i = 1; i < bytes.length; i++) {
+            result[i] = (byte) (bytes[i] - bytes[i - 1]);
+        }
+        return result;
+    }
+
 
     public static byte[] pixelsToBytes(Pixel[][] pixels) {
         ArrayList<Byte> res = new ArrayList<>();
-        for (Pixel[] row: pixels) {
-            for (Pixel pixel: row) {
-                res.add((byte) (pixel.blue ));
-                res.add((byte) (pixel.green ));
-                res.add((byte) (pixel.red ));
+        for (Pixel[] row : pixels) {
+            for (Pixel pixel : row) {
+                res.add((byte) (pixel.blue));
+                res.add((byte) (pixel.green));
+                res.add((byte) (pixel.red));
             }
         }
         byte[] bytes = new byte[res.size()];
@@ -72,7 +81,11 @@ public class TGA {
         byte[] bytes = new byte[body.length + header.length + footer.length];
         System.arraycopy(header, 0, bytes, 0, header.length);
         System.arraycopy(body, 0, bytes, header.length, body.length);
-        System.arraycopy(footer, 0, bytes, header.length+body.length, footer.length);
+        System.arraycopy(footer, 0, bytes, header.length + body.length, footer.length);
         return bytes;
+    }
+
+    public byte[] replaceBody(byte[] body) {
+        return TGA.mergeTGA(this.header, body, this.footer);
     }
 }
