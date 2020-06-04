@@ -22,39 +22,34 @@ public class Filters {
 
         int[][] weights = high ? weights_high : weights_low;
 
-        Pixel pix = new Pixel();
+        Pixel filteredPixel = new Pixel();
         for (int i = -1; i < 2; i++) {
             for (int j = -1; j < 2; j++) {
-                int i1 = Math.max(i, 0);
-                int j1 = Math.max(j, 0);
-
-                int xi = Math.min(i1 + x, this.image.height - 1);
-                int yj = Math.min(j1 + y, this.image.width - 1);
-                pix = pix.add(this.image.getPixels()[xi][yj].mul(weights[i + 1][j + 1]));
+                int xi = Math.min(0, Math.max(i + x, this.image.height - 1));
+                int yj = Math.min(0, Math.max(j + y, this.image.height - 1));
+                filteredPixel = filteredPixel.add(this.image.getPixels()[xi][yj].mul(weights[i + 1][j + 1]));
             }
         }
 
-        int weights_sum = 0;
+        int weightsSum = 0;
         for (int[] row : weights) {
             for (int weight : row) {
-                weights_sum += weight;
+                weightsSum += weight;
             }
         }
-        if (weights_sum < 0) {
-            weights_sum = 1;
-        }
+        weightsSum = weightsSum < 0 ? 1 : weightsSum;
 
-        pix = pix.div(weights_sum);
+        filteredPixel = filteredPixel.div(weightsSum);
 
-        pix.red = Math.max(pix.red, 0);
-        pix.green = Math.max(pix.green, 0);
-        pix.blue = Math.max(pix.blue, 0);
+        filteredPixel.red = Math.max(filteredPixel.red, 0);
+        filteredPixel.green = Math.max(filteredPixel.green, 0);
+        filteredPixel.blue = Math.max(filteredPixel.blue, 0);
 
-        pix.red = Math.min(pix.red, 255);
-        pix.green = Math.min(pix.green, 255);
-        pix.blue = Math.min(pix.blue, 255);
+        filteredPixel.red = Math.min(filteredPixel.red, 255);
+        filteredPixel.green = Math.min(filteredPixel.green, 255);
+        filteredPixel.blue = Math.min(filteredPixel.blue, 255);
 
-        return pix;
+        return filteredPixel;
     }
 
     public String eliasEncode(int n) {
@@ -82,28 +77,21 @@ public class Filters {
     }
 
     public Tuple encode() {
-        Pixel[][] filtered_low = new Pixel[this.image.height][this.image.width];
-        for (int i = 0; i < filtered_low.length; i++) {
-            for (int j = 0; j < filtered_low[0].length; j++) {
-                filtered_low[i][j] = filters(i, j, false);
+        Pixel[][] filteredLow = new Pixel[this.image.height][this.image.width];
+        Pixel[][] filteredHigh = new Pixel[this.image.height][this.image.width];
+        for (int i = 0; i < this.image.height; i++) {
+            for (int j = 0; j < this.image.width; j++) {
+                filteredLow[i][j] = filters(i, j, false);
+                filteredHigh[i][j] = filters(i, j, true);
             }
         }
 
-        Pixel[][] filtered_high = new Pixel[this.image.height][this.image.width];
-        for (int i = 0; i < filtered_high.length; i++) {
-            for (int j = 0; j < filtered_high[0].length; j++) {
-                filtered_high[i][j] = filters(i, j, true);
-            }
-        }
-
-        byte[] byte_array = TGA.pixelsToBytes(filtered_low);
-        byte_array = TGA.differentialCoding(byte_array);
+        byte[] byte_array = TGA.differentialCoding(TGA.pixelsToBytes(filteredLow));
 
         for (int i = 0; i < byte_array.length; i++) {
             byte x = byte_array[i];
             byte_array[i] = (byte) (x > 0 ? 2 * x : Math.abs(x) * 2 + 1);
         }
-
 
         StringBuilder bitStringBuilder = new StringBuilder();
         for (byte x : byte_array) {
@@ -117,15 +105,14 @@ public class Filters {
         }
 
         byte[] b = bitStringToBytes(bitString);
+        Pixel[][] quantified = quantify(filteredHigh);
 
-        Pixel[][] quantified = quantify(filtered_high);
         byte[] quantified_bytes = TGA.pixelsToBytes(quantified);
 
-        return new Tuple(filtered_low, filtered_high, b, quantified_bytes);
-
+        return new Tuple(filteredLow, filteredHigh, b, quantified_bytes);
     }
 
-    class Tuple {
+    static class Tuple {
         Pixel[][] filtered_low;
         Pixel[][] filtered_high;
         byte[] b;
@@ -203,7 +190,7 @@ public class Filters {
         double sum = 0;
         for (int i = 0; i < image.height; i++) {
             for (int j = 0; j < image.width; j++) {
-                int a,b;
+                int a, b;
                 switch (color) {
                     case 0 -> {
                         a = image.getPixels()[i][j].red;
@@ -268,7 +255,7 @@ public class Filters {
                     System.out.println("k powinno być być z zakresu od 1 do 7");
                 } else {
                     byte[] raw = Files.readAllBytes(Paths.get(args[1]));
-                    if(args[0].equals("--encode")) {
+                    if (args[0].equals("--encode")) {
                         TGA image = new TGA(raw);
                         Filters ft = new Filters(image, 2);
                         Tuple res = ft.encode();
@@ -276,14 +263,14 @@ public class Filters {
                         byte[] high_bytes = TGA.pixelsToBytes(res.filtered_high);
 
                         ft.stats("Low", res.filtered_low);
-                        ft.stats("High",res.filtered_high);
+                        ft.stats("High", res.filtered_high);
 
                         Files.write(Paths.get("filtered_low.tga"), image.replaceBody(low_bytes));
                         Files.write(Paths.get("filtered_high.tga"), image.replaceBody(high_bytes));
                         Files.write(Paths.get("encoded_low.tga"), image.replaceBody(res.b));
                         Files.write(Paths.get("encoded_high.tga"), image.replaceBody(res.quantified_bytes));
                     }
-                    if(args[0].equals("--decode")) {
+                    if (args[0].equals("--decode")) {
                         TGA image = new TGA(raw);
                         Filters ft = new Filters(image, 2);
                         byte[] bytes = ft.decode();
