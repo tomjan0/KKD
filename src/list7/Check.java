@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-public class Checker {
+public class Check {
 
     private static String[] splitToBlocks(String bitString) {
         String[] res = new String[bitString.length() / 4];
@@ -31,8 +31,8 @@ public class Checker {
 
         byte[] bytes1 = Files.readAllBytes(Paths.get(file1));
         byte[] bytes2 = Files.readAllBytes(Paths.get(file2));
-        String[] blocks1 = splitToBlocks(BytesUtils.bytesToBitString(bytes1));
-        String[] blocks2 = splitToBlocks(BytesUtils.bytesToBitString(bytes2));
+        String[] blocks1 = splitToBlocks(new Bits(bytes1).toString());
+        String[] blocks2 = splitToBlocks(new Bits(bytes2).toString());
 
         int longerFile = blocks1.length > blocks2.length ? 0 : 1;
         if (blocks1.length != blocks2.length) {

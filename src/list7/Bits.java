@@ -6,11 +6,11 @@ public class Bits {
     private final boolean[] bits;
 
     private static String formatBits(String bits) {
-        return bits + "0".repeat(8 - bits.length());
+        return "0".repeat(8 - bits.length()) + bits;
     }
 
     private static String byteToBits(byte b) {
-        String block = Integer.toBinaryString(((int) b) + 128);
+        String block = Integer.toBinaryString((b & 0xff));
         return formatBits(block);
     }
 
@@ -25,6 +25,13 @@ public class Bits {
             for (int k = 0; k < 8; k++) {
                 this.bits[j + k] = bitString.charAt(k) == '1';
             }
+        }
+    }
+
+    public Bits(String bitString) {
+        this.bits = new boolean[bitString.length()];
+        for (int i = 0; i < bitString.length(); i++) {
+            this.bits[i] = bitString.charAt(i) == '1';
         }
     }
 
@@ -53,7 +60,7 @@ public class Bits {
         for (int bitId = byteId * 8; bitId < (byteId + 1) * 8; bitId++) {
             bitString.append(this.bits[bitId] ? "1" : "0");
         }
-        return (byte) (Integer.parseInt(bitString.toString(), 2) - 128);
+        return (byte) (Integer.parseInt(bitString.toString(), 2));
     }
 
     public byte[] toBytes() {
